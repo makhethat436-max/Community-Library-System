@@ -1,16 +1,38 @@
-# React + Vite
+# 📚 Community Library System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A web-based Community Library Management System designed to manage books, users, transactions, and library stock efficiently.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Features
 
-## React Compiler
+- **Book Management:** Add, edit, and view available library books.
+- **User Management:** Keep track of library members and users.
+- **Transaction History:** Record book check-outs, returns, and history.
+- **Stock Tracking:** Monitor live inventory and stock levels.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🛠️ Built With
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **[React](https://react.dev/)** - Frontend UI library
+- **[Vite](https://vitejs.dev/)** - Lightning-fast build tool
+- **[JavaScript (ES6+)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)** - Application logic
+- **CSS3 / HTML5** - Styling and markup
+
+---
+
+## 💻 Getting Started Locally
+
+Follow these instructions to get a copy of the project running on your local machine.
+
+### Prerequisites
+
+Make sure you have **Node.js** installed on your computer.
+- Download it here: [Node.js Official Site](https://nodejs.org/)
+
+### Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/makhethat436-max/Community-Library-System.git](https://github.com/makhethat436-max/Community-Library-System.git)
