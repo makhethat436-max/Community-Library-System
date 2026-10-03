@@ -1,25 +1,39 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
 function Books() {
-  const [books, setBooks] = useState([]);
+  const [books, setBooks] = useState(() => {
+    return (
+      JSON.parse(
+        localStorage.getItem("books")
+      ) || []
+    );
+  });
+
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [genre, setGenre] = useState("");
   const [isbn, setIsbn] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState(null);
+  const [quantity, setQuantity] =
+    useState("");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [editingId, setEditingId] =
+    useState(null);
 
   useEffect(() => {
-    const savedBooks =
-      JSON.parse(localStorage.getItem("books")) || [];
+    localStorage.setItem(
+      "books",
+      JSON.stringify(books)
+    );
 
-    setBooks(savedBooks);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("books", JSON.stringify(books));
-    window.dispatchEvent(new Event("libraryDataChanged"));
+    window.dispatchEvent(
+      new Event("libraryDataChanged")
+    );
   }, [books]);
 
   const clearForm = () => {
@@ -41,31 +55,40 @@ function Books() {
       isbn.trim() === "" ||
       quantity === ""
     ) {
-      alert("Please fill in all fields");
+      alert(
+        "Please fill in all fields"
+      );
       return;
     }
 
     if (
       Number(quantity) < 0 ||
-      !Number.isInteger(Number(quantity))
+      !Number.isInteger(
+        Number(quantity)
+      )
     ) {
-      alert("Quantity must be a whole number of zero or more");
+      alert(
+        "Quantity must be a whole number of zero or more"
+      );
       return;
     }
 
     const isbnExists = books.some(
       (book) =>
-        book.isbn.toLowerCase() === isbn.trim().toLowerCase() &&
+        book.isbn.toLowerCase() ===
+          isbn.trim().toLowerCase() &&
         book.id !== editingId
     );
 
     if (isbnExists) {
-      alert("A book with this ISBN already exists");
+      alert(
+        "A book with this ISBN already exists"
+      );
       return;
     }
 
     if (editingId) {
-      setBooks(
+      const updatedBooks =
         books.map((book) =>
           book.id === editingId
             ? {
@@ -74,13 +97,17 @@ function Books() {
                 author: author.trim(),
                 genre: genre.trim(),
                 isbn: isbn.trim(),
-                quantity: Number(quantity)
+                quantity:
+                  Number(quantity)
               }
             : book
-        )
-      );
+        );
 
-      alert("Book updated successfully");
+      setBooks(updatedBooks);
+
+      alert(
+        "Book updated successfully"
+      );
     } else {
       const newBook = {
         id: Date.now(),
@@ -91,9 +118,14 @@ function Books() {
         quantity: Number(quantity)
       };
 
-      setBooks([...books, newBook]);
+      setBooks([
+        ...books,
+        newBook
+      ]);
 
-      alert("Book added successfully");
+      alert(
+        "Book added successfully"
+      );
     }
 
     clearForm();
@@ -114,14 +146,24 @@ function Books() {
   };
 
   const deleteBook = (id) => {
-    const answer = window.confirm(
-      "Are you sure you want to delete this book?"
-    );
-
-    if (answer) {
-      setBooks(
-        books.filter((book) => book.id !== id)
+    const answer =
+      window.confirm(
+        "Are you sure you want to delete this book?"
       );
+
+    if (!answer) {
+      return;
+    }
+
+    const updatedBooks =
+      books.filter(
+        (book) => book.id !== id
+      );
+
+    setBooks(updatedBooks);
+
+    if (editingId === id) {
+      clearForm();
     }
   };
 
@@ -137,26 +179,38 @@ function Books() {
     return "Available";
   };
 
-  const filteredBooks = books.filter((book) => {
-    const searchText = search.toLowerCase();
+  const filteredBooks =
+    books.filter((book) => {
+      const searchText =
+        search.toLowerCase();
 
-    return (
-      book.title.toLowerCase().includes(searchText) ||
-      book.author.toLowerCase().includes(searchText) ||
-      book.genre.toLowerCase().includes(searchText) ||
-      book.isbn.toLowerCase().includes(searchText)
-    );
-  });
+      return (
+        book.title
+          .toLowerCase()
+          .includes(searchText) ||
+        book.author
+          .toLowerCase()
+          .includes(searchText) ||
+        book.genre
+          .toLowerCase()
+          .includes(searchText) ||
+        book.isbn
+          .toLowerCase()
+          .includes(searchText)
+      );
+    });
 
   return (
     <div>
       <div className="page-heading">
         <div>
-          <h1>Book Inventory</h1>
+          <h1>
+            Book Inventory
+          </h1>
 
           <p>
-            Add new titles or update existing library
-            inventory.
+            Add new titles or update
+            existing library inventory.
           </p>
         </div>
       </div>
@@ -171,7 +225,8 @@ function Books() {
             </h2>
 
             <p>
-              Enter the book information below.
+              Enter the book information
+              below.
             </p>
           </div>
         </div>
@@ -181,68 +236,93 @@ function Books() {
           className="form-grid"
         >
           <div>
-            <label>Title</label>
+            <label>
+              Title
+            </label>
 
             <input
               type="text"
               value={title}
               onChange={(e) =>
-                setTitle(e.target.value)
+                setTitle(
+                  e.target.value
+                )
               }
               placeholder="e.g. MOPHEME"
+              required
             />
           </div>
 
           <div>
-            <label>Author</label>
+            <label>
+              Author
+            </label>
 
             <input
               type="text"
               value={author}
               onChange={(e) =>
-                setAuthor(e.target.value)
+                setAuthor(
+                  e.target.value
+                )
               }
               placeholder="e.g. S MATLOSA"
+              required
             />
           </div>
 
           <div>
-            <label>Genre</label>
+            <label>
+              Genre
+            </label>
 
             <input
               type="text"
               value={genre}
               onChange={(e) =>
-                setGenre(e.target.value)
+                setGenre(
+                  e.target.value
+                )
               }
               placeholder="e.g. Drama"
+              required
             />
           </div>
 
           <div>
-            <label>ISBN</label>
+            <label>
+              ISBN
+            </label>
 
             <input
               type="text"
               value={isbn}
               onChange={(e) =>
-                setIsbn(e.target.value)
+                setIsbn(
+                  e.target.value
+                )
               }
               placeholder="e.g. 9780133943030"
+              required
             />
           </div>
 
           <div>
-            <label>Quantity</label>
+            <label>
+              Quantity
+            </label>
 
             <input
               type="number"
               min="0"
               value={quantity}
               onChange={(e) =>
-                setQuantity(e.target.value)
+                setQuantity(
+                  e.target.value
+                )
               }
               placeholder="Enter quantity"
+              required
             />
           </div>
 
@@ -272,10 +352,13 @@ function Books() {
       <div className="section-card">
         <div className="section-heading search-heading">
           <div>
-            <h2>Book Collection</h2>
+            <h2>
+              Book Collection
+            </h2>
 
             <p>
-              Search by title, author, genre or ISBN.
+              Search by title, author,
+              genre or ISBN.
             </p>
           </div>
 
@@ -284,18 +367,26 @@ function Books() {
             className="search-box"
             value={search}
             onChange={(e) =>
-              setSearch(e.target.value)
+              setSearch(
+                e.target.value
+              )
             }
             placeholder="Search books..."
           />
         </div>
 
-        {filteredBooks.length === 0 ? (
+        {filteredBooks.length ===
+        0 ? (
           <div className="empty-state">
             <div>🔎</div>
-            <h3>No books found</h3>
+
+            <h3>
+              No books found
+            </h3>
+
             <p>
-              Try another search or add a new book.
+              Try another search or
+              add a new book.
             </p>
           </div>
         ) : (
@@ -303,65 +394,114 @@ function Books() {
             <table>
               <thead>
                 <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Genre</th>
-                  <th>ISBN</th>
-                  <th>Quantity</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>
+                    Title
+                  </th>
+
+                  <th>
+                    Author
+                  </th>
+
+                  <th>
+                    Genre
+                  </th>
+
+                  <th>
+                    ISBN
+                  </th>
+
+                  <th>
+                    Quantity
+                  </th>
+
+                  <th>
+                    Status
+                  </th>
+
+                  <th>
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
-                {filteredBooks.map((book) => (
-                  <tr
-                    key={book.id}
-                    className={
-                      Number(book.quantity) < 2
-                        ? "low-stock"
-                        : ""
-                    }
-                  >
-                    <td>{book.title}</td>
-                    <td>{book.author}</td>
-                    <td>{book.genre}</td>
-                    <td>{book.isbn}</td>
-                    <td>{book.quantity}</td>
-
-                    <td>
-                      <span
-                        className={`status ${getStatus(
+                {filteredBooks.map(
+                  (book) => (
+                    <tr
+                      key={book.id}
+                      className={
+                        Number(
                           book.quantity
-                        )
-                          .toLowerCase()
-                          .replaceAll(" ", "-")}`}
-                      >
-                        {getStatus(book.quantity)}
-                      </span>
-                    </td>
+                        ) < 2
+                          ? "low-stock"
+                          : ""
+                      }
+                    >
+                      <td>
+                        {book.title}
+                      </td>
 
-                    <td>
-                      <button
-                        className="action-button update-button"
-                        onClick={() =>
-                          editBook(book)
-                        }
-                      >
-                        Update
-                      </button>
+                      <td>
+                        {book.author}
+                      </td>
 
-                      <button
-                        className="action-button delete-button"
-                        onClick={() =>
-                          deleteBook(book.id)
-                        }
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      <td>
+                        {book.genre}
+                      </td>
+
+                      <td>
+                        {book.isbn}
+                      </td>
+
+                      <td>
+                        {book.quantity}
+                      </td>
+
+                      <td>
+                        <span
+                          className={`status ${getStatus(
+                            book.quantity
+                          )
+                            .toLowerCase()
+                            .replaceAll(
+                              " ",
+                              "-"
+                            )}`}
+                        >
+                          {getStatus(
+                            book.quantity
+                          )}
+                        </span>
+                      </td>
+
+                      <td>
+                        <button
+                          type="button"
+                          className="action-button update-button"
+                          onClick={() =>
+                            editBook(
+                              book
+                            )
+                          }
+                        >
+                          Update
+                        </button>
+
+                        <button
+                          type="button"
+                          className="action-button delete-button"
+                          onClick={() =>
+                            deleteBook(
+                              book.id
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>
