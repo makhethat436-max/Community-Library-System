@@ -20,7 +20,12 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={<Navigate to="/login" replace />}
+          element={
+            <Navigate
+              to="/login"
+              replace
+            />
+          }
         />
 
         <Route
@@ -34,7 +39,20 @@ function App() {
               path="/dashboard"
               element={<Dashboard />}
             />
+          </Route>
+        </Route>
 
+        <Route
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                "Admin",
+                "Librarian"
+              ]}
+            />
+          }
+        >
+          <Route element={<Layout />}>
             <Route
               path="/books"
               element={<Books />}
@@ -54,7 +72,12 @@ function App() {
 
         <Route
           path="*"
-          element={<Navigate to="/dashboard" replace />}
+          element={
+            <Navigate
+              to="/dashboard"
+              replace
+            />
+          }
         />
       </Routes>
     </BrowserRouter>

@@ -18,20 +18,36 @@ function Navbar() {
 
     return currentUser.name
       .split(" ")
-      .map((name) => name.charAt(0))
+      .map((name) =>
+        name.charAt(0)
+      )
       .join("")
       .substring(0, 2)
       .toUpperCase();
   };
 
   const logout = () => {
-    localStorage.removeItem("loggedIn");
-    localStorage.removeItem("currentUser");
+    localStorage.removeItem(
+      "loggedIn"
+    );
+
+    localStorage.removeItem(
+      "currentUser"
+    );
 
     navigate("/login", {
       replace: true
     });
   };
+
+  const canManage =
+    currentUser &&
+    (
+      currentUser.role ===
+        "Admin" ||
+      currentUser.role ===
+        "Librarian"
+    );
 
   return (
     <aside className="sidebar">
@@ -41,8 +57,13 @@ function Navbar() {
         </div>
 
         <div>
-          <strong>Community</strong>
-          <small>Library</small>
+          <strong>
+            Community
+          </strong>
+
+          <small>
+            Library
+          </small>
         </div>
       </div>
 
@@ -63,41 +84,45 @@ function Navbar() {
           Dashboard
         </NavLink>
 
-        <NavLink
-          to="/books"
-          className={({ isActive }) =>
-            isActive
-              ? "nav-btn active"
-              : "nav-btn"
-          }
-        >
-          <span>📚</span>
-          Books
-        </NavLink>
+        {canManage && (
+          <>
+            <NavLink
+              to="/books"
+              className={({ isActive }) =>
+                isActive
+                  ? "nav-btn active"
+                  : "nav-btn"
+              }
+            >
+              <span>📚</span>
+              Books
+            </NavLink>
 
-        <NavLink
-          to="/transactions"
-          className={({ isActive }) =>
-            isActive
-              ? "nav-btn active"
-              : "nav-btn"
-          }
-        >
-          <span>↔</span>
-          Transactions
-        </NavLink>
+            <NavLink
+              to="/transactions"
+              className={({ isActive }) =>
+                isActive
+                  ? "nav-btn active"
+                  : "nav-btn"
+              }
+            >
+              <span>↔</span>
+              Transactions
+            </NavLink>
 
-        <NavLink
-          to="/users"
-          className={({ isActive }) =>
-            isActive
-              ? "nav-btn active"
-              : "nav-btn"
-          }
-        >
-          <span>👥</span>
-          Users
-        </NavLink>
+            <NavLink
+              to="/users"
+              className={({ isActive }) =>
+                isActive
+                  ? "nav-btn active"
+                  : "nav-btn"
+              }
+            >
+              <span>👥</span>
+              User Management
+            </NavLink>
+          </>
+        )}
       </nav>
 
       <div className="sidebar-bottom">
