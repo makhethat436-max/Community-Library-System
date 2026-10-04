@@ -1,241 +1,111 @@
-import {
-  useEffect,
-  useState
-} from "react";
+import { useEffect, useState } from "react";
 
 function Transactions() {
   const [books, setBooks] = useState([]);
   const [users, setUsers] = useState([]);
-  const [transactions, setTransactions] =
-    useState([]);
+  const [transactions, setTransactions] = useState([]);
 
-  const [selectedBook, setSelectedBook] =
-    useState("");
-
-  const [transactionType, setTransactionType] =
-    useState("Borrow");
-
-  const [quantity, setQuantity] =
-    useState(1);
-
-  const [borrower, setBorrower] =
-    useState("");
-
-  const [staff, setStaff] =
-    useState("");
+  const [bookId, setBookId] = useState("");
+  const [type, setType] = useState("Borrow");
+  const [quantity, setQuantity] = useState(1);
+  const [borrower, setBorrower] = useState("");
+  const [staff, setStaff] = useState("");
 
   const loadData = () => {
-    setBooks(
-      JSON.parse(
-        localStorage.getItem("books")
-      ) || []
-    );
-
-    setUsers(
-      JSON.parse(
-        localStorage.getItem("users")
-      ) || []
-    );
-
+    setBooks(JSON.parse(localStorage.getItem("books")) || []);
+    setUsers(JSON.parse(localStorage.getItem("users")) || []);
     setTransactions(
-      JSON.parse(
-        localStorage.getItem(
-          "transactions"
-        )
-      ) || []
+      JSON.parse(localStorage.getItem("transactions")) || []
     );
   };
 
   useEffect(() => {
     loadData();
 
-    window.addEventListener(
-      "libraryDataChanged",
-      loadData
-    );
+    window.addEventListener("libraryDataChanged", loadData);
 
-    return () => {
+    return () =>
       window.removeEventListener(
         "libraryDataChanged",
         loadData
       );
-    };
   }, []);
 
-  const getBorrowedQuantity = (
-    bookId
-  ) => {
-    const borrowed =
-      transactions
-        .filter(
-          (transaction) =>
-            transaction.bookId ===
-              bookId &&
-            transaction.type ===
-              "Borrow"
-        )
-        .reduce(
-          (total, transaction) =>
-            total +
-            Number(
-              transaction.quantity
-            ),
-          0
-        );
+  const borrowed = id => {
+    const borrowedBooks = transactions
+      .filter(t => t.bookId === id && t.type === "Borrow")
+      .reduce((total, t) => total + Number(t.quantity), 0);
 
-    const returned =
-      transactions
-        .filter(
-          (transaction) =>
-            transaction.bookId ===
-              bookId &&
-            transaction.type ===
-              "Return"
-        )
-        .reduce(
-          (total, transaction) =>
-            total +
-            Number(
-              transaction.quantity
-            ),
-          0
-        );
+    const returnedBooks = transactions
+      .filter(t => t.bookId === id && t.type === "Return")
+      .reduce((total, t) => total + Number(t.quantity), 0);
 
-    return borrowed - returned;
+    return borrowedBooks - returnedBooks;
   };
 
-  const handleTransaction = (e) => {
+  const saveTransaction = e => {
     e.preventDefault();
 
-    if (!selectedBook) {
-      alert("Please select a book");
-      return;
-    }
-
-    const amount = Number(quantity);
-
-    if (
-      !Number.isInteger(amount) ||
-      amount <= 0
-    ) {
-      alert(
-        "Quantity must be a whole number greater than zero"
-      );
+    if (!bookId || !staff || quantity < 1) {
+      alert("Please complete all required fields");
       return;
     }
 
     const book = books.find(
-      (item) =>
-        item.id ===
-        Number(selectedBook)
+      book => book.id === Number(bookId)
     );
 
-    if (!book) {
-      alert("Book not found");
+    const amount = Number(quantity);
+
+    if (!book) return;
+
+    if (
+      type === "Borrow" &&
+      amount > Number(book.quantity)
+    ) {
+      alert("There are not enough copies available");
       return;
     }
 
-    if (!staff) {
-      alert(
-        "Please select the staff member"
-      );
+    if (
+      type === "Return" &&
+      amount > borrowed(book.id)
+    ) {
+      alert("There are not enough borrowed copies");
       return;
     }
 
-    const borrowedQuantity =
-      getBorrowedQuantity(book.id);
+    let newQuantity = Number(book.quantity);
 
-    let newQuantity =
-      Number(book.quantity);
-
-    if (
-      transactionType === "Borrow"
-    ) {
-      if (
-        amount >
-        Number(book.quantity)
-      ) {
-        alert(
-          "There are not enough copies available"
-        );
-        return;
-      }
-
-      newQuantity =
-        Number(book.quantity) -
-        amount;
+    if (type === "Borrow") {
+      newQuantity -= amount;
     }
 
-    if (
-      transactionType === "Return"
-    ) {
-      if (borrowedQuantity <= 0) {
-        alert(
-          "There are no borrowed copies to return"
-        );
-        return;
-      }
-
-      if (
-        amount >
-        borrowedQuantity
-      ) {
-        alert(
-          `Only ${borrowedQuantity} borrowed copies can be returned`
-        );
-        return;
-      }
-
-      newQuantity =
-        Number(book.quantity) +
-        amount;
+    if (type === "Return" || type === "Add Stock") {
+      newQuantity += amount;
     }
 
-    if (
-      transactionType ===
-      "Add Stock"
-    ) {
-      newQuantity =
-        Number(book.quantity) +
-        amount;
-    }
+    const updatedBooks = books.map(item =>
+      item.id === book.id
+        ? { ...item, quantity: newQuantity }
+        : item
+    );
 
-    const updatedBooks =
-      books.map((item) =>
-        item.id === book.id
-          ? {
-              ...item,
-              quantity:
-                newQuantity
-            }
-          : item
-      );
-
-    const newTransaction = {
+    const transaction = {
       id: Date.now(),
       bookId: book.id,
       bookTitle: book.title,
-      type: transactionType,
+      type,
       quantity: amount,
-      borrower:
-        transactionType ===
-        "Borrow"
-          ? borrower.trim()
-          : "",
+      borrower: type === "Borrow" ? borrower : "",
       staff,
-      date:
-        new Date().toLocaleString()
+      date: new Date().toLocaleString()
     };
 
     const updatedTransactions = [
-      newTransaction,
+      transaction,
       ...transactions
     ];
-
-    setBooks(updatedBooks);
-    setTransactions(
-      updatedTransactions
-    );
 
     localStorage.setItem(
       "books",
@@ -244,24 +114,21 @@ function Transactions() {
 
     localStorage.setItem(
       "transactions",
-      JSON.stringify(
-        updatedTransactions
-      )
+      JSON.stringify(updatedTransactions)
     );
 
-    window.dispatchEvent(
-      new Event("libraryDataChanged")
-    );
+    setBooks(updatedBooks);
+    setTransactions(updatedTransactions);
 
-    setSelectedBook("");
-    setTransactionType("Borrow");
+    window.dispatchEvent(new Event("libraryDataChanged"));
+
+    setBookId("");
+    setType("Borrow");
     setQuantity(1);
     setBorrower("");
     setStaff("");
 
-    alert(
-      `${transactionType} transaction completed`
-    );
+    alert("Transaction completed");
   };
 
   return (
@@ -269,156 +136,90 @@ function Transactions() {
       <div className="page-heading">
         <div>
           <h1>Transactions</h1>
-
-          <p>
-            Manage borrowing, returns,
-            stock and transaction history.
-          </p>
+          <p>Manage borrowing, returns and stock.</p>
         </div>
       </div>
 
       <div className="section-card">
         <div className="section-heading">
           <div>
-            <h2>
-              Book Transaction
-            </h2>
-
-            <p>
-              Record every movement of
-              library books.
-            </p>
+            <h2>Book Transaction</h2>
+            <p>Record library book activity.</p>
           </div>
         </div>
 
-        <form
-          onSubmit={handleTransaction}
-          className="form-grid"
-        >
+        <form onSubmit={saveTransaction} className="form-grid">
           <div>
-            <label>
-              Select Book
-            </label>
+            <label>Book</label>
 
             <select
-              value={selectedBook}
-              onChange={(e) =>
-                setSelectedBook(
-                  e.target.value
-                )
-              }
+              value={bookId}
+              onChange={e => setBookId(e.target.value)}
               required
             >
-              <option value="">
-                Choose a book
-              </option>
+              <option value="">Choose a book</option>
 
-              {books.map((book) => (
-                <option
-                  key={book.id}
-                  value={book.id}
-                >
-                  {book.title} -{" "}
-                  {book.quantity}{" "}
-                  available
+              {books.map(book => (
+                <option key={book.id} value={book.id}>
+                  {book.title} - {book.quantity} available
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label>
-              Transaction Type
-            </label>
+            <label>Transaction Type</label>
 
             <select
-              value={transactionType}
-              onChange={(e) =>
-                setTransactionType(
-                  e.target.value
-                )
-              }
+              value={type}
+              onChange={e => setType(e.target.value)}
             >
-              <option value="Borrow">
-                Borrow Book
-              </option>
-
-              <option value="Return">
-                Return Book
-              </option>
-
-              <option value="Add Stock">
-                Add Stock
-              </option>
+              <option>Borrow</option>
+              <option>Return</option>
+              <option>Add Stock</option>
             </select>
           </div>
 
           <div>
-            <label>
-              Quantity
-            </label>
+            <label>Quantity</label>
 
             <input
               type="number"
               min="1"
               value={quantity}
-              onChange={(e) =>
-                setQuantity(
-                  e.target.value
-                )
-              }
+              onChange={e => setQuantity(e.target.value)}
               required
             />
           </div>
 
           <div>
-            <label>
-              Borrower Name / Detail
-            </label>
+            <label>Borrower</label>
 
             <input
-              type="text"
               value={borrower}
-              onChange={(e) =>
-                setBorrower(
-                  e.target.value
-                )
-              }
+              onChange={e => setBorrower(e.target.value)}
               placeholder="Borrower name"
             />
           </div>
 
           <div>
-            <label>
-              Processed By
-            </label>
+            <label>Processed By</label>
 
             <select
               value={staff}
-              onChange={(e) =>
-                setStaff(
-                  e.target.value
-                )
-              }
+              onChange={e => setStaff(e.target.value)}
               required
             >
-              <option value="">
-                Select staff member
-              </option>
+              <option value="">Select staff</option>
 
               {users
                 .filter(
-                  (user) =>
-                    user.role ===
-                      "Admin" ||
-                    user.role ===
-                      "Librarian"
+                  user =>
+                    user.role === "Admin" ||
+                    user.role === "Librarian"
                 )
-                .map((user) => (
-                  <option
-                    key={user.id}
-                    value={user.name}
-                  >
+                .map(user => (
+                  <option key={user.id}>
                     {user.name}
                   </option>
                 ))}
@@ -426,10 +227,7 @@ function Transactions() {
           </div>
 
           <div className="form-actions">
-            <button
-              type="submit"
-              className="btn primary"
-            >
+            <button className="btn primary">
               Save Transaction
             </button>
           </div>
@@ -439,30 +237,15 @@ function Transactions() {
       <div className="section-card">
         <div className="section-heading">
           <div>
-            <h2>
-              Transaction History
-            </h2>
-
-            <p>
-              Complete record of library
-              activity.
-            </p>
+            <h2>Transaction History</h2>
+            <p>Library transaction records.</p>
           </div>
         </div>
 
-        {transactions.length ===
-        0 ? (
+        {transactions.length === 0 ? (
           <div className="empty-state">
-            <div>↔</div>
-
-            <h3>
-              No transactions yet
-            </h3>
-
-            <p>
-              Transactions will appear
-              here.
-            </p>
+            <h3>No transactions yet</h3>
+            <p>Transactions will appear here.</p>
           </div>
         ) : (
           <div className="table-container">
@@ -479,58 +262,16 @@ function Transactions() {
               </thead>
 
               <tbody>
-                {transactions.map(
-                  (transaction) => (
-                    <tr
-                      key={
-                        transaction.id
-                      }
-                    >
-                      <td>
-                        {
-                          transaction.date
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          transaction.bookTitle
-                        }
-                      </td>
-
-                      <td>
-                        <span
-                          className={`status transaction-${transaction.type
-                            .toLowerCase()
-                            .replaceAll(
-                              " ",
-                              "-"
-                            )}`}
-                        >
-                          {
-                            transaction.type
-                          }
-                        </span>
-                      </td>
-
-                      <td>
-                        {
-                          transaction.quantity
-                        }
-                      </td>
-
-                      <td>
-                        {transaction.borrower ||
-                          "-"}
-                      </td>
-
-                      <td>
-                        {transaction.staff ||
-                          "-"}
-                      </td>
-                    </tr>
-                  )
-                )}
+                {transactions.map(transaction => (
+                  <tr key={transaction.id}>
+                    <td>{transaction.date}</td>
+                    <td>{transaction.bookTitle}</td>
+                    <td>{transaction.type}</td>
+                    <td>{transaction.quantity}</td>
+                    <td>{transaction.borrower || "-"}</td>
+                    <td>{transaction.staff}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

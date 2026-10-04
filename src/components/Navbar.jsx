@@ -1,86 +1,37 @@
-import {
-  NavLink,
-  useNavigate
-} from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 function Navbar() {
   const navigate = useNavigate();
-
-  const currentUser =
-    JSON.parse(
-      localStorage.getItem("currentUser")
-    ) || null;
-
-  const getInitials = () => {
-    if (!currentUser) {
-      return "GU";
-    }
-
-    return currentUser.name
-      .split(" ")
-      .map((name) =>
-        name.charAt(0)
-      )
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  };
+  const user = JSON.parse(localStorage.getItem("currentUser"));
 
   const logout = () => {
-    localStorage.removeItem(
-      "loggedIn"
-    );
-
-    localStorage.removeItem(
-      "currentUser"
-    );
-
-    navigate("/login", {
-      replace: true
-    });
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("currentUser");
+    navigate("/login");
   };
 
   const canManage =
-    currentUser &&
-    (
-      currentUser.role ===
-        "Admin" ||
-      currentUser.role ===
-        "Librarian"
-    );
+    user &&
+    (user.role === "Admin" || user.role === "Librarian");
 
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-icon">
-          📚
-        </div>
-
         <div>
-          <strong>
-            Community
-          </strong>
-
-          <small>
-            Library
-          </small>
+          <strong>Community</strong>
+          <small>Library</small>
         </div>
       </div>
 
-      <div className="navigation-title">
-        MAIN MENU
-      </div>
+      <div className="navigation-title">MAIN MENU</div>
 
       <nav className="sidebar-nav">
         <NavLink
           to="/dashboard"
           className={({ isActive }) =>
-            isActive
-              ? "nav-btn active"
-              : "nav-btn"
+            isActive ? "nav-btn active" : "nav-btn"
           }
         >
-          <span>▦</span>
           Dashboard
         </NavLink>
 
@@ -89,36 +40,27 @@ function Navbar() {
             <NavLink
               to="/books"
               className={({ isActive }) =>
-                isActive
-                  ? "nav-btn active"
-                  : "nav-btn"
+                isActive ? "nav-btn active" : "nav-btn"
               }
             >
-              <span>📚</span>
               Books
             </NavLink>
 
             <NavLink
               to="/transactions"
               className={({ isActive }) =>
-                isActive
-                  ? "nav-btn active"
-                  : "nav-btn"
+                isActive ? "nav-btn active" : "nav-btn"
               }
             >
-              <span>↔</span>
               Transactions
             </NavLink>
 
             <NavLink
               to="/users"
               className={({ isActive }) =>
-                isActive
-                  ? "nav-btn active"
-                  : "nav-btn"
+                isActive ? "nav-btn active" : "nav-btn"
               }
             >
-              <span>👥</span>
               User Management
             </NavLink>
           </>
@@ -126,30 +68,20 @@ function Navbar() {
       </nav>
 
       <div className="sidebar-bottom">
-        {currentUser && (
+        {user && (
           <div className="sidebar-user">
             <div className="user-avatar">
-              {getInitials()}
+              {user.name.charAt(0).toUpperCase()}
             </div>
 
             <div className="sidebar-user-info">
-              <strong>
-                {currentUser.name}
-              </strong>
-
-              <small>
-                {currentUser.role}
-              </small>
+              <strong>{user.name}</strong>
+              <small>{user.role}</small>
             </div>
           </div>
         )}
 
-        <button
-          type="button"
-          className="logout-button"
-          onClick={logout}
-        >
-          <span>↪</span>
+        <button className="logout-button" onClick={logout}>
           Logout
         </button>
       </div>

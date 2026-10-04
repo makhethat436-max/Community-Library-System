@@ -1,42 +1,21 @@
-import {
-  useEffect,
-  useState
-} from "react";
+import { useEffect, useState } from "react";
 
 function Users() {
   const [users, setUsers] = useState([]);
-
   const [name, setName] = useState("");
-  const [membershipId, setMembershipId] =
-    useState("");
-  const [role, setRole] =
-    useState("Member");
-  const [password, setPassword] =
-    useState("");
-
-  const [editingId, setEditingId] =
-    useState(null);
+  const [membershipId, setMembershipId] = useState("");
+  const [role, setRole] = useState("Member");
+  const [password, setPassword] = useState("");
+  const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
-    const savedUsers =
-      JSON.parse(
-        localStorage.getItem("users")
-      ) || [];
-
-    setUsers(savedUsers);
+    setUsers(JSON.parse(localStorage.getItem("users")) || []);
   }, []);
 
-  const saveUsers = (newUsers) => {
+  const saveUsers = newUsers => {
     setUsers(newUsers);
-
-    localStorage.setItem(
-      "users",
-      JSON.stringify(newUsers)
-    );
-
-    window.dispatchEvent(
-      new Event("libraryDataChanged")
-    );
+    localStorage.setItem("users", JSON.stringify(newUsers));
+    window.dispatchEvent(new Event("libraryDataChanged"));
   };
 
   const clearForm = () => {
@@ -47,139 +26,89 @@ function Users() {
     setEditingId(null);
   };
 
-  const handleSubmit = (e) => {
+  const saveUser = e => {
     e.preventDefault();
 
-    if (
-      name.trim() === "" ||
-      membershipId.trim() === ""
-    ) {
+    if (!name.trim() || !membershipId.trim()) {
       alert("Please fill in all fields");
       return;
     }
 
-    if (
-      !editingId &&
-      password.trim() === ""
-    ) {
+    if (!editingId && !password.trim()) {
       alert("Please enter a password");
       return;
     }
 
     const exists = users.some(
-      (user) =>
+      user =>
         user.membershipId.toLowerCase() ===
-          membershipId
-            .trim()
-            .toLowerCase() &&
+          membershipId.trim().toLowerCase() &&
         user.id !== editingId
     );
 
     if (exists) {
-      alert(
-        "This membership ID already exists"
-      );
+      alert("This membership ID already exists");
       return;
     }
 
     if (editingId) {
-      const updatedUsers = users.map(
-        (user) => {
-          if (user.id !== editingId) {
-            return user;
-          }
-
-          return {
-            ...user,
-            name: name.trim(),
-            membershipId:
-              membershipId.trim(),
-            role,
-            password:
-              password.trim() === ""
-                ? user.password
-                : password
-          };
-        }
+      saveUsers(
+        users.map(user =>
+          user.id === editingId
+            ? {
+                ...user,
+                name: name.trim(),
+                membershipId: membershipId.trim(),
+                role,
+                password: password.trim()
+                  ? password
+                  : user.password
+              }
+            : user
+        )
       );
 
-      saveUsers(updatedUsers);
-
-      alert(
-        "User updated successfully"
-      );
+      alert("User updated successfully");
     } else {
-      const newUser = {
-        id: Date.now(),
-        name: name.trim(),
-        membershipId:
-          membershipId.trim(),
-        role,
-        password: password.trim()
-      };
-
       saveUsers([
         ...users,
-        newUser
+        {
+          id: Date.now(),
+          name: name.trim(),
+          membershipId: membershipId.trim(),
+          role,
+          password: password.trim()
+        }
       ]);
 
-      alert(
-        "User added successfully"
-      );
+      alert("User added successfully");
     }
 
     clearForm();
   };
 
-  const editUser = (user) => {
+  const editUser = user => {
     setName(user.name);
-    setMembershipId(
-      user.membershipId
-    );
+    setMembershipId(user.membershipId);
     setRole(user.role);
     setPassword("");
     setEditingId(user.id);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
   };
 
-  const deleteUser = (id) => {
-    const user = users.find(
-      (item) => item.id === id
-    );
+  const deleteUser = id => {
+    const user = users.find(user => user.id === id);
 
     if (
-      user &&
-      user.role === "Admin"
+      user.role === "Admin" &&
+      users.filter(user => user.role === "Admin").length === 1
     ) {
-      const admins = users.filter(
-        (item) => item.role === "Admin"
-      );
-
-      if (admins.length === 1) {
-        alert(
-          "The last Admin cannot be deleted."
-        );
-        return;
-      }
-    }
-
-    const answer = window.confirm(
-      "Are you sure you want to delete this user?"
-    );
-
-    if (!answer) {
+      alert("The last Admin cannot be deleted");
       return;
     }
 
-    const newUsers = users.filter(
-      (user) => user.id !== id
-    );
+    if (!window.confirm("Delete this user?")) return;
 
-    saveUsers(newUsers);
+    saveUsers(users.filter(user => user.id !== id));
   };
 
   return (
@@ -187,81 +116,45 @@ function Users() {
       <div className="page-heading">
         <div>
           <h1>User Management</h1>
-
-          <p>
-            Manage library members,
-            librarians and administrators.
-          </p>
+          <p>Manage library users and their roles.</p>
         </div>
       </div>
 
       <div className="section-card">
         <div className="section-heading">
           <div>
-            <h2>
-              {editingId
-                ? "Update User"
-                : "Add New User"}
-            </h2>
-
-            <p>
-              Register and manage library
-              accounts.
-            </p>
+            <h2>{editingId ? "Update User" : "Add User"}</h2>
+            <p>Register a library user.</p>
           </div>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="form-grid"
-        >
+        <form onSubmit={saveUser} className="form-grid">
           <div>
             <label>Name</label>
-
             <input
-              type="text"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
-              placeholder="Full name"
+              onChange={e => setName(e.target.value)}
               required
             />
           </div>
 
           <div>
-            <label>
-              Membership ID
-            </label>
-
+            <label>Membership ID</label>
             <input
-              type="text"
               value={membershipId}
-              onChange={(e) =>
-                setMembershipId(
-                  e.target.value
-                )
-              }
-              placeholder="e.g. LIB002"
+              onChange={e => setMembershipId(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label>Password</label>
-
             <input
               type="password"
               value={password}
-              onChange={(e) =>
-                setPassword(
-                  e.target.value
-                )
-              }
+              onChange={e => setPassword(e.target.value)}
               placeholder={
-                editingId
-                  ? "Leave empty to keep current password"
-                  : "Enter password"
+                editingId ? "Leave empty to keep current password" : ""
               }
             />
           </div>
@@ -271,32 +164,17 @@ function Users() {
 
             <select
               value={role}
-              onChange={(e) =>
-                setRole(e.target.value)
-              }
+              onChange={e => setRole(e.target.value)}
             >
-              <option value="Member">
-                Member
-              </option>
-
-              <option value="Librarian">
-                Librarian
-              </option>
-
-              <option value="Admin">
-                Admin
-              </option>
+              <option>Member</option>
+              <option>Librarian</option>
+              <option>Admin</option>
             </select>
           </div>
 
           <div className="form-actions">
-            <button
-              type="submit"
-              className="btn primary"
-            >
-              {editingId
-                ? "Update User"
-                : "Add User"}
+            <button className="btn primary">
+              {editingId ? "Update User" : "Add User"}
             </button>
 
             {editingId && (
@@ -305,7 +183,7 @@ function Users() {
                 className="btn secondary"
                 onClick={clearForm}
               >
-                Cancel Edit
+                Cancel
               </button>
             )}
           </div>
@@ -315,90 +193,53 @@ function Users() {
       <div className="section-card">
         <div className="section-heading">
           <div>
-            <h2>
-              Registered Users
-            </h2>
-
-            <p>
-              Update member information
-              or remove users.
-            </p>
+            <h2>Registered Users</h2>
+            <p>Manage existing users.</p>
           </div>
         </div>
 
-        {users.length === 0 ? (
-          <div className="empty-state">
-            <div>👥</div>
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Membership ID</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
 
-            <h3>
-              No users registered
-            </h3>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id}>
+                  <td>{user.name}</td>
+                  <td>{user.membershipId}</td>
+                  <td>
+                    <span className="role-badge">
+                      {user.role}
+                    </span>
+                  </td>
 
-            <p>
-              Add your first library
-              user above.
-            </p>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>
-                    Membership ID
-                  </th>
-                  <th>Role</th>
-                  <th>Actions</th>
+                  <td>
+                    <button
+                      className="action-button update-button"
+                      onClick={() => editUser(user)}
+                    >
+                      Update
+                    </button>
+
+                    <button
+                      className="action-button delete-button"
+                      onClick={() => deleteUser(user.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      {user.name}
-                    </td>
-
-                    <td>
-                      {user.membershipId}
-                    </td>
-
-                    <td>
-                      <span className="role-badge">
-                        {user.role}
-                      </span>
-                    </td>
-
-                    <td>
-                      <button
-                        type="button"
-                        className="action-button update-button"
-                        onClick={() =>
-                          editUser(user)
-                        }
-                      >
-                        Update
-                      </button>
-
-                      <button
-                        type="button"
-                        className="action-button delete-button"
-                        onClick={() =>
-                          deleteUser(
-                            user.id
-                          )
-                        }
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

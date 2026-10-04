@@ -18,85 +18,71 @@ function Dashboard() {
 
     window.addEventListener("libraryDataChanged", loadData);
 
-    return () => {
-      window.removeEventListener("libraryDataChanged", loadData);
-    };
+    return () =>
+      window.removeEventListener(
+        "libraryDataChanged",
+        loadData
+      );
   }, []);
 
-  const totalBooks = books.length;
-
-  const totalCopies = books.reduce(
+  const copies = books.reduce(
     (total, book) => total + Number(book.quantity),
     0
   );
 
   const lowStock = books.filter(
-    (book) => Number(book.quantity) < 2
+    book => Number(book.quantity) < 2
   ).length;
 
-  const borrowedBooks = transactions
-    .filter((transaction) => transaction.type === "Borrow")
+  const borrowed = transactions
+    .filter(transaction => transaction.type === "Borrow")
     .reduce(
       (total, transaction) =>
         total + Number(transaction.quantity),
       0
     );
 
-  const returnedBooks = transactions
-    .filter((transaction) => transaction.type === "Return")
+  const returned = transactions
+    .filter(transaction => transaction.type === "Return")
     .reduce(
       (total, transaction) =>
         total + Number(transaction.quantity),
       0
     );
 
-  const getStatus = (quantity) => {
-    if (Number(quantity) === 0) {
-      return "Out of Stock";
-    }
-
-    if (Number(quantity) < 2) {
-      return "Low Stock";
-    }
-
+  const status = quantity => {
+    if (Number(quantity) === 0) return "Out of Stock";
+    if (Number(quantity) < 2) return "Low Stock";
     return "Available";
   };
 
   return (
-    <div className="dashboard-page">
+    <div>
       <div className="welcome">
         <div>
           <h1>Library Overview</h1>
-
           <p>
-            Track current stock levels, active members,
-            and library activity.
+            Track books, users and library activity.
           </p>
         </div>
       </div>
 
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-icon">📚</div>
-
           <div>
             <small>Book Titles</small>
-            <h2>{totalBooks}</h2>
+            <h2>{books.length}</h2>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">▤</div>
-
           <div>
             <small>Total Copies</small>
-            <h2>{totalCopies}</h2>
+            <h2>{copies}</h2>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">👥</div>
-
           <div>
             <small>Registered Users</small>
             <h2>{users.length}</h2>
@@ -104,8 +90,6 @@ function Dashboard() {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">⚠</div>
-
           <div>
             <small>Low Stock</small>
             <h2>{lowStock}</h2>
@@ -115,26 +99,20 @@ function Dashboard() {
 
       <div className="stats-grid secondary-stats">
         <div className="stat-card">
-          <div className="stat-icon">↗</div>
-
           <div>
             <small>Borrowed Copies</small>
-            <h2>{borrowedBooks}</h2>
+            <h2>{borrowed}</h2>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">↩</div>
-
           <div>
             <small>Returned Copies</small>
-            <h2>{returnedBooks}</h2>
+            <h2>{returned}</h2>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">↔</div>
-
           <div>
             <small>Transactions</small>
             <h2>{transactions.length}</h2>
@@ -146,17 +124,12 @@ function Dashboard() {
         <div className="section-heading">
           <div>
             <h2>Current Inventory Status</h2>
-
-            <p>
-              Overview of books currently managed in the
-              library.
-            </p>
+            <p>Current books and their availability.</p>
           </div>
         </div>
 
         {books.length === 0 ? (
           <div className="empty-state">
-            <div>📚</div>
             <h3>No books available</h3>
             <p>Add books from the Books section.</p>
           </div>
@@ -175,7 +148,7 @@ function Dashboard() {
               </thead>
 
               <tbody>
-                {books.map((book) => (
+                {books.map(book => (
                   <tr
                     key={book.id}
                     className={
@@ -190,14 +163,8 @@ function Dashboard() {
                     <td>{book.isbn}</td>
                     <td>{book.quantity}</td>
                     <td>
-                      <span
-                        className={`status ${getStatus(
-                          book.quantity
-                        )
-                          .toLowerCase()
-                          .replaceAll(" ", "-")}`}
-                      >
-                        {getStatus(book.quantity)}
+                      <span className="status">
+                        {status(book.quantity)}
                       </span>
                     </td>
                   </tr>
