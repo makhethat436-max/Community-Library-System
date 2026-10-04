@@ -50,9 +50,15 @@ function Dashboard() {
       0
     );
 
-  const status = quantity => {
-    if (Number(quantity) === 0) return "Out of Stock";
-    if (Number(quantity) < 2) return "Low Stock";
+  const getStatus = quantity => {
+    if (Number(quantity) === 0) {
+      return "OUT OF STOCK";
+    }
+
+    if (Number(quantity) < 2) {
+      return "LOW STOCK";
+    }
+
     return "Available";
   };
 
@@ -66,6 +72,13 @@ function Dashboard() {
           </p>
         </div>
       </div>
+
+      {lowStock > 0 && (
+        <div className="stock-alert">
+          Low Stock Alert: {lowStock} book(s) have fewer
+          than 2 copies.
+        </div>
+      )}
 
       <div className="stats-grid">
         <div className="stat-card">
@@ -124,14 +137,18 @@ function Dashboard() {
         <div className="section-heading">
           <div>
             <h2>Current Inventory Status</h2>
-            <p>Current books and their availability.</p>
+            <p>
+              Current books and their availability.
+            </p>
           </div>
         </div>
 
         {books.length === 0 ? (
           <div className="empty-state">
             <h3>No books available</h3>
-            <p>Add books from the Books section.</p>
+            <p>
+              Add books from the Books section.
+            </p>
           </div>
         ) : (
           <div className="table-container">
@@ -162,9 +179,16 @@ function Dashboard() {
                     <td>{book.genre}</td>
                     <td>{book.isbn}</td>
                     <td>{book.quantity}</td>
+
                     <td>
-                      <span className="status">
-                        {status(book.quantity)}
+                      <span
+                        className={
+                          Number(book.quantity) < 2
+                            ? "stock-warning"
+                            : "status"
+                        }
+                      >
+                        {getStatus(book.quantity)}
                       </span>
                     </td>
                   </tr>

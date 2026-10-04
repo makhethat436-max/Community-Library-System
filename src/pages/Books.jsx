@@ -15,7 +15,10 @@ function Books() {
 
   useEffect(() => {
     localStorage.setItem("books", JSON.stringify(books));
-    window.dispatchEvent(new Event("libraryDataChanged"));
+
+    window.dispatchEvent(
+      new Event("libraryDataChanged")
+    );
   }, [books]);
 
   const clearForm = () => {
@@ -107,9 +110,25 @@ function Books() {
   };
 
   const deleteBook = id => {
-    if (!window.confirm("Delete this book?")) return;
+    if (!window.confirm("Delete this book?")) {
+      return;
+    }
 
-    setBooks(books.filter(book => book.id !== id));
+    setBooks(
+      books.filter(book => book.id !== id)
+    );
+  };
+
+  const getStatus = quantity => {
+    if (Number(quantity) === 0) {
+      return "OUT OF STOCK";
+    }
+
+    if (Number(quantity) < 2) {
+      return "LOW STOCK";
+    }
+
+    return "Available";
   };
 
   const filteredBooks = books.filter(book => {
@@ -122,12 +141,6 @@ function Books() {
       book.isbn.toLowerCase().includes(text)
     );
   });
-
-  const status = quantity => {
-    if (Number(quantity) === 0) return "Out of Stock";
-    if (Number(quantity) < 2) return "Low Stock";
-    return "Available";
-  };
 
   return (
     <div>
@@ -145,61 +158,86 @@ function Books() {
               {editingId ? "Update Book" : "Add Book"}
             </h2>
 
-            <p>Enter the book details below.</p>
+            <p>
+              Enter the book details below.
+            </p>
           </div>
         </div>
 
-        <form onSubmit={saveBook} className="form-grid">
+        <form
+          onSubmit={saveBook}
+          className="form-grid"
+        >
           <div>
             <label>Title</label>
+
             <input
               value={title}
-              onChange={e => setTitle(e.target.value)}
+              onChange={e =>
+                setTitle(e.target.value)
+              }
               required
             />
           </div>
 
           <div>
             <label>Author</label>
+
             <input
               value={author}
-              onChange={e => setAuthor(e.target.value)}
+              onChange={e =>
+                setAuthor(e.target.value)
+              }
               required
             />
           </div>
 
           <div>
             <label>Genre</label>
+
             <input
               value={genre}
-              onChange={e => setGenre(e.target.value)}
+              onChange={e =>
+                setGenre(e.target.value)
+              }
               required
             />
           </div>
 
           <div>
             <label>ISBN</label>
+
             <input
               value={isbn}
-              onChange={e => setIsbn(e.target.value)}
+              onChange={e =>
+                setIsbn(e.target.value)
+              }
               required
             />
           </div>
 
           <div>
             <label>Quantity</label>
+
             <input
               type="number"
               min="0"
               value={quantity}
-              onChange={e => setQuantity(e.target.value)}
+              onChange={e =>
+                setQuantity(e.target.value)
+              }
               required
             />
           </div>
 
           <div className="form-actions">
-            <button className="btn primary">
-              {editingId ? "Update Book" : "Add Book"}
+            <button
+              type="submit"
+              className="btn primary"
+            >
+              {editingId
+                ? "Update Book"
+                : "Add Book"}
             </button>
 
             {editingId && (
@@ -219,21 +257,29 @@ function Books() {
         <div className="section-heading search-heading">
           <div>
             <h2>Book Collection</h2>
-            <p>Search the book collection.</p>
+
+            <p>
+              Search the book collection.
+            </p>
           </div>
 
           <input
             className="search-box"
             placeholder="Search books..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e =>
+              setSearch(e.target.value)
+            }
           />
         </div>
 
         {filteredBooks.length === 0 ? (
           <div className="empty-state">
             <h3>No books found</h3>
-            <p>Add a book or change your search.</p>
+
+            <p>
+              Add a book or change your search.
+            </p>
           </div>
         ) : (
           <div className="table-container">
@@ -265,19 +311,36 @@ function Books() {
                     <td>{book.genre}</td>
                     <td>{book.isbn}</td>
                     <td>{book.quantity}</td>
-                    <td>{status(book.quantity)}</td>
+
+                    <td>
+                      <span
+                        className={
+                          Number(book.quantity) < 2
+                         ? "stock-warning"
+                            : "status"
+                        }
+                      >
+                        {getStatus(book.quantity)}
+                      </span>
+                    </td>
 
                     <td>
                       <button
+                        type="button"
                         className="action-button update-button"
-                        onClick={() => editBook(book)}
+                        onClick={() =>
+                          editBook(book)
+                        }
                       >
                         Update
                       </button>
 
                       <button
+                        type="button"
                         className="action-button delete-button"
-                        onClick={() => deleteBook(book.id)}
+                        onClick={() =>
+                          deleteBook(book.id)
+                        }
                       >
                         Delete
                       </button>
