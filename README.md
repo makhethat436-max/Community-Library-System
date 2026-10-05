@@ -1,4 +1,4 @@
-# 📚 Community Library System
+# Community Library System
 
 A web-based Community Library Management System designed to manage books, users, transactions, and library stock efficiently.
 
