@@ -1,10 +1,10 @@
+
 import { useEffect, useState } from "react";
 
 function Books() {
-  const [books, setBooks] = useState(
-    JSON.parse(localStorage.getItem("books")) || []
-  );
+  const API_URL = "http://localhost:5000/api/books";
 
+  const [books, setBooks] = useState([]);
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [genre, setGenre] = useState("");
@@ -12,14 +12,39 @@ function Books() {
   const [quantity, setQuantity] = useState("");
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Send the login token with requests
+  const getHeaders = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("token")}`
+  });
+
+  // Load books from MySQL
+  const loadBooks = async () => {
+    try {
+      const response = await fetch(API_URL, {
+        headers: getHeaders()
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to load books.");
+      }
+
+      setBooks(data);
+
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem("books", JSON.stringify(books));
-
-    window.dispatchEvent(
-      new Event("libraryDataChanged")
-    );
-  }, [books]);
+    loadBooks();
+  }, []);
 
   const clearForm = () => {
     setTitle("");
@@ -30,7 +55,8 @@ function Books() {
     setEditingId(null);
   };
 
-  const saveBook = e => {
+  // Add or update a book
+  const saveBook = async (e) => {
     e.preventDefault();
 
     if (
@@ -40,7 +66,7 @@ function Books() {
       !isbn.trim() ||
       quantity === ""
     ) {
-      alert("Please fill in all fields");
+      alert("Please fill in all fields.");
       return;
     }
 
@@ -48,59 +74,52 @@ function Books() {
       Number(quantity) < 0 ||
       !Number.isInteger(Number(quantity))
     ) {
-      alert("Quantity must be a whole number");
+      alert("Quantity must be a whole number.");
       return;
     }
 
-    const duplicate = books.some(
-      book =>
-        book.isbn.toLowerCase() ===
-          isbn.trim().toLowerCase() &&
-        book.id !== editingId
-    );
+    const bookData = {
+      title: title.trim(),
+      author: author.trim(),
+      genre: genre.trim(),
+      isbn: isbn.trim(),
+      quantity: Number(quantity)
+    };
 
-    if (duplicate) {
-      alert("This ISBN already exists");
-      return;
-    }
-
-    if (editingId) {
-      setBooks(
-        books.map(book =>
-          book.id === editingId
-            ? {
-                ...book,
-                title: title.trim(),
-                author: author.trim(),
-                genre: genre.trim(),
-                isbn: isbn.trim(),
-                quantity: Number(quantity)
-              }
-            : book
-        )
+    try {
+      const response = await fetch(
+        editingId ? `${API_URL}/${editingId}` : API_URL,
+        {
+          method: editingId ? "PUT" : "POST",
+          headers: getHeaders(),
+          body: JSON.stringify(bookData)
+        }
       );
 
-      alert("Book updated successfully");
-    } else {
-      setBooks([
-        ...books,
-        {
-          id: Date.now(),
-          title: title.trim(),
-          author: author.trim(),
-          genre: genre.trim(),
-          isbn: isbn.trim(),
-          quantity: Number(quantity)
-        }
-      ]);
+      const result = await response.json();
 
-      alert("Book added successfully");
+      if (!response.ok) {
+        throw new Error(result.message || "Unable to save book.");
+      }
+
+      await loadBooks();
+
+      alert(
+        result.message ||
+        (editingId
+          ? "Book updated successfully."
+          : "Book added successfully.")
+      );
+
+      clearForm();
+
+    } catch (error) {
+      alert(error.message);
     }
-
-    clearForm();
   };
 
-  const editBook = book => {
+  // Put selected book details into the form
+  const editBook = (book) => {
     setTitle(book.title);
     setAuthor(book.author);
     setGenre(book.genre);
@@ -109,17 +128,38 @@ function Books() {
     setEditingId(book.id);
   };
 
-  const deleteBook = id => {
+  // Delete a book from MySQL
+  const deleteBook = async (id) => {
     if (!window.confirm("Delete this book?")) {
       return;
     }
 
-    setBooks(
-      books.filter(book => book.id !== id)
-    );
+    try {
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: getHeaders()
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Unable to delete book.");
+      }
+
+      await loadBooks();
+
+      if (editingId === id) {
+        clearForm();
+      }
+
+      alert(result.message || "Book deleted successfully.");
+
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
-  const getStatus = quantity => {
+  const getStatus = (quantity) => {
     if (Number(quantity) === 0) {
       return "OUT OF STOCK";
     }
@@ -131,13 +171,13 @@ function Books() {
     return "Available";
   };
 
-  const filteredBooks = books.filter(book => {
+  const filteredBooks = books.filter((book) => {
     const text = search.toLowerCase();
 
     return (
       book.title.toLowerCase().includes(text) ||
       book.author.toLowerCase().includes(text) ||
-      book.genre.toLowerCase().includes(text) ||
+      (book.genre || "").toLowerCase().includes(text) ||
       book.isbn.toLowerCase().includes(text)
     );
   });
@@ -157,87 +197,62 @@ function Books() {
             <h2>
               {editingId ? "Update Book" : "Add Book"}
             </h2>
-
-            <p>
-              Enter the book details below.
-            </p>
+            <p>Enter the book details below.</p>
           </div>
         </div>
 
-        <form
-          onSubmit={saveBook}
-          className="form-grid"
-        >
+        <form onSubmit={saveBook} className="form-grid">
           <div>
             <label>Title</label>
-
             <input
               value={title}
-              onChange={e =>
-                setTitle(e.target.value)
-              }
+              onChange={e => setTitle(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label>Author</label>
-
             <input
               value={author}
-              onChange={e =>
-                setAuthor(e.target.value)
-              }
+              onChange={e => setAuthor(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label>Genre</label>
-
             <input
               value={genre}
-              onChange={e =>
-                setGenre(e.target.value)
-              }
+              onChange={e => setGenre(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label>ISBN</label>
-
             <input
               value={isbn}
-              onChange={e =>
-                setIsbn(e.target.value)
-              }
+              onChange={e => setIsbn(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label>Quantity</label>
-
             <input
               type="number"
               min="0"
+              step="1"
               value={quantity}
-              onChange={e =>
-                setQuantity(e.target.value)
-              }
+              onChange={e => setQuantity(e.target.value)}
               required
             />
           </div>
 
           <div className="form-actions">
-            <button
-              type="submit"
-              className="btn primary"
-            >
-              {editingId
-                ? "Update Book"
-                : "Add Book"}
+            <button type="submit" className="btn primary">
+              {editingId ? "Update Book" : "Add Book"}
             </button>
 
             {editingId && (
@@ -257,29 +272,23 @@ function Books() {
         <div className="section-heading search-heading">
           <div>
             <h2>Book Collection</h2>
-
-            <p>
-              Search the book collection.
-            </p>
+            <p>Search the book collection.</p>
           </div>
 
           <input
             className="search-box"
             placeholder="Search books..."
             value={search}
-            onChange={e =>
-              setSearch(e.target.value)
-            }
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
 
-        {filteredBooks.length === 0 ? (
+        {loading ? (
+          <p>Loading books...</p>
+        ) : filteredBooks.length === 0 ? (
           <div className="empty-state">
             <h3>No books found</h3>
-
-            <p>
-              Add a book or change your search.
-            </p>
+            <p>Add a book or change your search.</p>
           </div>
         ) : (
           <div className="table-container">
@@ -301,9 +310,7 @@ function Books() {
                   <tr
                     key={book.id}
                     className={
-                      Number(book.quantity) < 2
-                        ? "low-stock"
-                        : ""
+                      Number(book.quantity) < 2 ? "low-stock" : ""
                     }
                   >
                     <td>{book.title}</td>
@@ -316,7 +323,7 @@ function Books() {
                       <span
                         className={
                           Number(book.quantity) < 2
-                         ? "stock-warning"
+                            ? "stock-warning"
                             : "status"
                         }
                       >
@@ -328,9 +335,7 @@ function Books() {
                       <button
                         type="button"
                         className="action-button update-button"
-                        onClick={() =>
-                          editBook(book)
-                        }
+                        onClick={() => editBook(book)}
                       >
                         Update
                       </button>
@@ -338,9 +343,7 @@ function Books() {
                       <button
                         type="button"
                         className="action-button delete-button"
-                        onClick={() =>
-                          deleteBook(book.id)
-                        }
+                        onClick={() => deleteBook(book.id)}
                       >
                         Delete
                       </button>

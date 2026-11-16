@@ -1,14 +1,20 @@
+
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 
 function Layout() {
-  const currentUser =
-    JSON.parse(
+  let currentUser = null;
+
+  try {
+    currentUser = JSON.parse(
       localStorage.getItem("currentUser")
-    ) || null;
+    );
+  } catch (error) {
+    currentUser = null;
+  }
 
   const getInitials = () => {
-    if (!currentUser) {
+    if (!currentUser || !currentUser.name) {
       return "GU";
     }
 
@@ -46,13 +52,9 @@ function Layout() {
 
             {currentUser && (
               <div className="top-user-info">
-                <strong>
-                  {currentUser.name}
-                </strong>
+                <strong>{currentUser.name}</strong>
 
-                <small>
-                  {currentUser.role}
-                </small>
+                <small>{currentUser.role}</small>
               </div>
             )}
           </div>

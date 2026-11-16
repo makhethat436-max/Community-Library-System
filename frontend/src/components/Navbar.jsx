@@ -1,18 +1,30 @@
+
 import { NavLink, useNavigate } from "react-router-dom";
 
 function Navbar() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("currentUser"));
+  } catch (error) {
+    user = null;
+  }
 
   const logout = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("loggedIn");
     localStorage.removeItem("currentUser");
+
     navigate("/login");
   };
 
   const canManage =
     user &&
     (user.role === "Admin" || user.role === "Librarian");
+
+  const isAdmin = user && user.role === "Admin";
 
   return (
     <aside className="sidebar">
@@ -54,16 +66,18 @@ function Navbar() {
             >
               Transactions
             </NavLink>
-
-            <NavLink
-              to="/users"
-              className={({ isActive }) =>
-                isActive ? "nav-btn active" : "nav-btn"
-              }
-            >
-              User Management
-            </NavLink>
           </>
+        )}
+
+        {isAdmin && (
+          <NavLink
+            to="/users"
+            className={({ isActive }) =>
+              isActive ? "nav-btn active" : "nav-btn"
+            }
+          >
+            User Management
+          </NavLink>
         )}
       </nav>
 
@@ -71,7 +85,7 @@ function Navbar() {
         {user && (
           <div className="sidebar-user">
             <div className="user-avatar">
-              {user.name.charAt(0).toUpperCase()}
+              {user.name?.charAt(0).toUpperCase()}
             </div>
 
             <div className="sidebar-user-info">

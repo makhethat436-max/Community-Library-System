@@ -1,13 +1,19 @@
+
 import { Navigate, Outlet } from "react-router-dom";
 
 function ProtectedRoute({ allowedRoles }) {
   const loggedIn =
     localStorage.getItem("loggedIn") === "true";
 
-  const currentUser =
-    JSON.parse(
+  let currentUser = null;
+
+  try {
+    currentUser = JSON.parse(
       localStorage.getItem("currentUser")
-    ) || null;
+    );
+  } catch (error) {
+    currentUser = null;
+  }
 
   if (!loggedIn || !currentUser) {
     return <Navigate to="/login" replace />;
